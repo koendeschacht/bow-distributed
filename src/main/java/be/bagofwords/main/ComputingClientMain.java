@@ -1,9 +1,7 @@
 package be.bagofwords.main;
 
-import be.bagofwords.application.ApplicationManager;
 import be.bagofwords.application.status.perf.ThreadSampleMonitor;
 import be.bagofwords.distributed.computingClient.ComputingClient;
-import be.bagofwords.distributed.computingClient.ComputingClientApplicationContextFactory;
 import be.bagofwords.distributed.computingClient.ComputingClientConnection;
 import be.bagofwords.distributed.shared.RemoteApplicationContextFactory;
 import be.bagofwords.ui.UI;
@@ -28,14 +26,13 @@ public class ComputingClientMain {
         if (connection != null) {
             if (StringUtils.isEmpty(applicationContextFactoryClassName)) {
                 //run application without spring context
-                ComputingClient computingClient = new ComputingClient(connection);
-                computingClient.setThreadSampleMonitor(new ThreadSampleMonitor(false, null, null));
+                ComputingClient computingClient = new ComputingClient(connection, new ThreadSampleMonitor(false, null, null));
                 computingClient.run();
             } else {
                 //run application with spring context
                 RemoteApplicationContextFactory clientFactory = createApplicationConfigurationInstance(connection, applicationContextFactoryClassName);
-                ComputingClientApplicationContextFactory contextFactory = new ComputingClientApplicationContextFactory(new ComputingClient(connection), clientFactory, connection);
-                ApplicationManager.runSafely(contextFactory);
+                ComputingClient computingClient = new ComputingClient(connection, new ThreadSampleMonitor(false, null, null), clientFactory.createApplicationContext());
+                computingClient.run();
             }
         }
     }

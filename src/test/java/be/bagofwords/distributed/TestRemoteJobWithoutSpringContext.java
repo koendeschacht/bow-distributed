@@ -25,7 +25,7 @@ public class TestRemoteJobWithoutSpringContext {
         for (int i = 0; i < 10; i++) {
             new Thread() {
                 public void run() {
-                    new ComputingClientMain().main(new String[0]);
+                    ComputingClientMain.main(new String[0]);
                 }
             }.start();
         }

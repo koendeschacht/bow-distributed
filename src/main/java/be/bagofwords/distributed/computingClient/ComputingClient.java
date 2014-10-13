@@ -6,7 +6,6 @@ import be.bagofwords.distributed.shared.RemoteJob;
 import be.bagofwords.ui.UI;
 import be.bagofwords.util.SafeThread;
 import be.bagofwords.util.Utils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 public class ComputingClient extends SafeThread implements MainClass {
@@ -15,18 +14,16 @@ public class ComputingClient extends SafeThread implements MainClass {
     private ThreadSampleMonitor threadSampleMonitor;
     private final ComputingClientConnection connection;
 
-    public ComputingClient(ComputingClientConnection connection) {
+    public ComputingClient(ComputingClientConnection connection, ThreadSampleMonitor threadSampleMonitor) {
         super("ComputingClient", false);
         this.connection = connection;
-    }
-
-    @Autowired
-    public void setThreadSampleMonitor(ThreadSampleMonitor threadSampleMonitor) {
         this.threadSampleMonitor = threadSampleMonitor;
     }
 
-    @Autowired
-    public void setApplicationContext(ApplicationContext applicationContext) {
+    public ComputingClient(ComputingClientConnection connection, ThreadSampleMonitor threadSampleMonitor, ApplicationContext applicationContext) {
+        super("ComputingClient", false);
+        this.connection = connection;
+        this.threadSampleMonitor = threadSampleMonitor;
         this.applicationContext = applicationContext;
     }
 
@@ -34,12 +31,17 @@ public class ComputingClient extends SafeThread implements MainClass {
         try {
             while (!isTerminateRequested()) {
                 RemoteJob job = connection.readJob();
-                if (applicationContext != null) {
-                    autoWire(job);
-                }
-                threadSampleMonitor.clearSamples();
                 long startOfExecution = System.currentTimeMillis();
-                executeJob(job);
+                threadSampleMonitor.clearSamples();
+                try {
+                    if (applicationContext != null) {
+                        autoWire(job);
+                    }
+                    job.execute();
+                } catch (Throwable t) {
+                    UI.writeError("Caught exception while running job", t);
+                    job.setException(Utils.getStackTrace(t));
+                }
                 job.setTimeUsedForRunningJob(System.currentTimeMillis() - startOfExecution);
                 attachThreadSamples(job);
                 connection.sendJobBack(job);
@@ -48,16 +50,6 @@ public class ComputingClient extends SafeThread implements MainClass {
             }
         } catch (Throwable e) {
             UI.writeError("Unexpected error in computing client ", e);
-        }
-    }
-
-    private void executeJob(RemoteJob job) {
-        try {
-            UI.write("### Executing job " + job.getJobName());
-            job.execute();
-        } catch (Throwable e) {
-            UI.writeError("Caught exception ", e);
-            job.setException(Utils.getStackTrace(e));
         }
     }
 
