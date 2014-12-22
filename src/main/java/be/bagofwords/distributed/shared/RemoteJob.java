@@ -18,6 +18,7 @@ public abstract class RemoteJob {
     private String exception;
     private Counter<Trace> relevantTracesCounter;
     private Counter<Trace> lessRelevantTracesCounter;
+    private int numOfSamples;
 
 
     public RemoteJob(String jobName) {
@@ -103,5 +104,13 @@ public abstract class RemoteJob {
 
     public void setLessRelevantTracesCounter(Counter<Trace> lessRelevantTracesCounter) {
         this.lessRelevantTracesCounter = lessRelevantTracesCounter;
+    }
+
+    public int getNumOfSamples() {
+        return numOfSamples;
+    }
+
+    public void setNumOfSamples(int numOfSamples) {
+        this.numOfSamples = numOfSamples;
     }
 }

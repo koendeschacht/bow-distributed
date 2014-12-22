@@ -38,6 +38,7 @@ public class RemoteJobService implements CloseableComponent, StatusViewable {
     private final String waitForJobsMonitor = new String("WAIT_FOR_JOBS");
     private final Counter<Trace> relevantTracesCounter;
     private final Counter<Trace> lessRelevantTracesCounter;
+    private int numOfSamples;
     private final ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
 
     private ComputingClientAccepter computingClientAccepter;
@@ -54,6 +55,7 @@ public class RemoteJobService implements CloseableComponent, StatusViewable {
         this.computingClients = new ArrayList<>();
         this.cachedClassDatas = new ArrayList<>();
         this.relevantTracesCounter = new Counter<>();
+        this.numOfSamples = 0;
         this.lessRelevantTracesCounter = new Counter<>();
         this.computingClientAccepter = new ComputingClientAccepter(this, applicationContextFactory);
         this.computingClientAccepter.start();
@@ -92,6 +94,7 @@ public class RemoteJobService implements CloseableComponent, StatusViewable {
             lessRelevantTracesCounter.addAll(job.getLessRelevantTracesCounter());
             lessRelevantTracesCounter.trim(ThreadSampleMonitor.MAX_NUM_OF_SAMPLES / 2);
         }
+        numOfSamples += job.getNumOfSamples();
     }
 
     private RemoteJob checkForException(RemoteJob job) {
@@ -140,10 +143,10 @@ public class RemoteJobService implements CloseableComponent, StatusViewable {
 
             result.append("Collected " + relevantTracesCounter.getTotal() + " samples.");
             result.append("<h2>Relevant traces</h2><pre>");
-            ThreadSamplesPrinter.printTopTraces(result, relevantTracesCounter);
+            ThreadSamplesPrinter.printTopTraces(result, relevantTracesCounter, numOfSamples);
             result.append("</pre>");
             result.append("<h2>Other traces</h2><pre>");
-            ThreadSamplesPrinter.printTopTraces(result, lessRelevantTracesCounter);
+            ThreadSamplesPrinter.printTopTraces(result, lessRelevantTracesCounter, numOfSamples);
             result.append("</pre>");
 
         } catch (Throwable t) {
