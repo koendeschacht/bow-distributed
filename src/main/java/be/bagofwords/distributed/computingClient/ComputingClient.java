@@ -2,6 +2,8 @@ package be.bagofwords.distributed.computingClient;
 
 import be.bagofwords.application.MainClass;
 import be.bagofwords.application.status.perf.ThreadSampleMonitor;
+import be.bagofwords.application.status.perf.Trace;
+import be.bagofwords.counts.Counter;
 import be.bagofwords.distributed.shared.RemoteJob;
 import be.bagofwords.ui.UI;
 import be.bagofwords.util.SafeThread;
@@ -59,11 +61,16 @@ public class ComputingClient extends SafeThread implements MainClass {
 
     private void attachThreadSamples(RemoteJob job) {
         synchronized (threadSampleMonitor.getRelevantTracesCounter()) {
-            job.setRelevantTracesCounter(threadSampleMonitor.getRelevantTracesCounter().clone());
+            Counter<Trace> clone = threadSampleMonitor.getRelevantTracesCounter().clone();
+            clone.trim(ThreadSampleMonitor.MAX_NUM_OF_SAMPLES / 10);
+            job.setRelevantTracesCounter(clone);
         }
         synchronized (threadSampleMonitor.getLessRelevantTracesCounter()) {
-            job.setLessRelevantTracesCounter(threadSampleMonitor.getLessRelevantTracesCounter().clone());
+            Counter<Trace> clone = threadSampleMonitor.getLessRelevantTracesCounter().clone();
+            clone.trim(ThreadSampleMonitor.MAX_NUM_OF_SAMPLES / 10);
+            job.setLessRelevantTracesCounter(clone);
         }
+        job.setNumOfSamples(threadSampleMonitor.getNumOfSamples());
     }
 
 }

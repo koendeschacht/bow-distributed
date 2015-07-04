@@ -1,6 +1,7 @@
 package be.bagofwords.distributed;
 
 
+import be.bagofwords.application.memory.MemoryManager;
 import be.bagofwords.distributed.jobServer.RemoteJobFactory;
 import be.bagofwords.distributed.jobServer.RemoteJobService;
 import be.bagofwords.distributed.shared.RemoteJob;
@@ -23,9 +24,12 @@ public class TestRemoteJobServiceWithSpringContext {
 
     @Autowired
     private RemoteJobService remoteJobService;
+    @Autowired
+    private MemoryManager memoryManager;
 
     @Test
     public void testRemoteJobService() {
+        memoryManager.setDumpHeapToFileWhenMemoryFull(true);
         long start = System.currentTimeMillis();
         final int numOfJobs = 100;
 
